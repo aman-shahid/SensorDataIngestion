@@ -15,11 +15,8 @@ builder.Services.AddHostedService<QueueProcessor>();
 
 var app = builder.Build();
 
-
 // Configure endpoints
-app.MapGet("/", () => Results.Ok(new { Service = "SensorDataIngestion", Version = "1.0" }));
-
-app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
+app.MapGet("/health", () => Results.Ok(new { status = "Healthy" })); // just to check that app is up and running (post deployment). Needs to be more sophisticated in prod/cloud
 
 app.MapPost("/api/ingest", async (HttpRequest request, Channel<SensorData> channel) =>
 {
@@ -57,8 +54,11 @@ app.Lifetime.ApplicationStarted.Register(() =>
     Console.WriteLine("SensorDataIngestion started. POST sensor data to /api/ingest as JSON.");
 });
 
-// Configure Kestrel URL so we can test locally
-app.Urls.Clear();
-app.Urls.Add("http://localhost:5000");
+if(app.Environment.IsDevelopment())
+{
+    // for local dev
+    app.Urls.Clear();
+    app.Urls.Add("http://localhost:5000");
+}
 
 await app.RunAsync();
